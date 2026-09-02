@@ -128,6 +128,7 @@ Common causes: Helm not installed, no network for `helm repo update`, or the clu
 - One k3d node instead of a multi-node setup
 - Prometheus retention capped at 1 day, 1 Gi disk
 - No Alertmanager, node-exporter, Dex, or Vault
+- Argo CD repo-server bumped to 768Mi — kube-prometheus-stack is too large to render with less
 - Resource requests kept low in the Helm values
 
 If you have more RAM to spare, add agents in `bootstrap/k3d-config.yaml` and bump limits in the addon `values.yaml` files.

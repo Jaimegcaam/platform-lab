@@ -11,10 +11,10 @@ controller:
   resources:
     requests:
       cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 200m
       memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
 
 server:
   resources:
@@ -25,14 +25,15 @@ server:
       cpu: 200m
       memory: 256Mi
 
+# kube-prometheus-stack is a large chart — repo-server needs headroom to render it
 repoServer:
   resources:
     requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 200m
+      cpu: 100m
       memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
 
 applicationSet:
   enabled: false
