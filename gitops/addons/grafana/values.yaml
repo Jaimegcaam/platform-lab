@@ -27,14 +27,46 @@ datasources:
         access: proxy
         isDefault: true
 
-# Load dashboards from ConfigMaps in gitops/addons/grafana/manifests (sidecar)
-sidecar:
-  dashboards:
-    enabled: true
-    label: grafana_dashboard
-    labelValue: "1"
-    folderAnnotation: grafana_folder
-    searchNamespace: monitoring
-    provider:
-      allowUiUpdates: true
-    defaultFolderName: General
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: kubernetes
+        orgId: 1
+        folder: Kubernetes
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/kubernetes
+      - name: platform
+        orgId: 1
+        folder: Platform
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/platform
+
+# JSON dashboards in Git — fetched from GitHub when Argo CD renders the Helm chart
+dashboards:
+  kubernetes:
+    k8s-views-global:
+      url: https://raw.githubusercontent.com/Jaimegcaam/platform-lab/main/gitops/addons/grafana/dashboards/k8s-views-global.json
+      datasource: Prometheus
+    k8s-views-namespaces:
+      url: https://raw.githubusercontent.com/Jaimegcaam/platform-lab/main/gitops/addons/grafana/dashboards/k8s-views-namespaces.json
+      datasource: Prometheus
+    k8s-views-pods:
+      url: https://raw.githubusercontent.com/Jaimegcaam/platform-lab/main/gitops/addons/grafana/dashboards/k8s-views-pods.json
+      datasource: Prometheus
+    k8s-compute-cluster:
+      url: https://raw.githubusercontent.com/Jaimegcaam/platform-lab/main/gitops/addons/grafana/dashboards/k8s-compute-cluster.json
+      datasource: Prometheus
+  platform:
+    prometheus-overview:
+      url: https://raw.githubusercontent.com/Jaimegcaam/platform-lab/main/gitops/addons/grafana/dashboards/prometheus-overview.json
+      datasource: Prometheus
+    argocd:
+      url: https://raw.githubusercontent.com/Jaimegcaam/platform-lab/main/gitops/addons/grafana/dashboards/argocd.json
+      datasource: Prometheus

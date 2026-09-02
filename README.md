@@ -149,13 +149,14 @@ Using a fork? Update `repoURL` in the manifests under `gitops/clusters/`.
 
 ### Grafana dashboards (existing cluster)
 
-After pulling these changes, push to Git and sync. Argo CD metrics also need a one-time Helm upgrade:
+Dashboard JSON lives in `gitops/addons/grafana/dashboards/`. After push, sync the **`grafana`** app (not only grafana-ingress). Then restart Grafana:
 
 ```bash
-helm upgrade argocd argo/argo-cd -n argocd --values bootstrap/argocd-values.yaml
+kubectl rollout restart deployment/grafana -n monitoring
+kubectl get configmap -n monitoring | grep grafana-dashboard
 ```
 
-Then sync `grafana`, `kube-prometheus-stack`, and `argocd-metrics` in Argo CD.
+You should see several `grafana-dashboard-*` ConfigMaps. If not, open the `grafana` app in Argo CD and check the sync error.
 
 ## TODO
 
