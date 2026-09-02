@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${REPO_ROOT}"
+
+echo "==> Working directory: ${REPO_ROOT}"
 echo "==> Creating k3d cluster (single node)..."
 k3d cluster create --config bootstrap/k3d-config.yaml
 

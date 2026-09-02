@@ -1,128 +1,63 @@
 # platform-lab
 
-Lightweight **Platform Engineering** homelab on WSL2: minimal k3d cluster, Argo CD GitOps, and resource-tuned addons for a local PC.
+A small Kubernetes homelab I run on WSL2 to practice Platform Engineering: k3d for the cluster, Argo CD for GitOps, and a few platform addons (ingress, metrics, dashboards).
 
----
+It is tuned for a laptop — single node, low memory limits — not a production clone.
 
-## What's included
+## What runs here
 
-| Component | Role |
-|-----------|------|
-| **k3d** | Single-node K3s on Docker (low RAM footprint) |
-| **Argo CD** | GitOps — App of Apps pattern |
-| **ingress-nginx** | Unified ingress on `:8080` |
-| **Prometheus** | Metrics (1-day retention, 1 Gi disk) |
-| **Grafana** | Dashboards wired to Prometheus |
+- **k3d** — one-node K3s cluster in Docker
+- **Argo CD** — syncs the repo to the cluster (App of Apps)
+- **ingress-nginx** — HTTP ingress on port `8080`
+- **Prometheus + Grafana** — basic observability stack
 
----
+## Prerequisites
 
-## Requirements
-
-Run everything from **WSL2** (Ubuntu):
-
-| Tool | Version |
-|------|---------|
-| Docker | 20+ |
-| kubectl | 1.28+ |
-| Helm | 3.12+ |
-| k3d | 5.6+ |
-
-**Recommended RAM:** 6–8 Gi for WSL. The cluster uses ~2–3 Gi at idle with this profile.
+WSL2 with Docker, `kubectl`, Helm, and k3d installed. Roughly 6–8 Gi RAM assigned to WSL is enough.
 
 ```bash
 docker info && kubectl version --client && helm version && k3d version
 ```
 
----
+## How it works
 
-## Architecture
+1. `bootstrap/create-cluster.sh` creates the k3d cluster and installs Argo CD.
+2. The script asks for a Grafana password and stores it in a Kubernetes Secret (not in Git).
+3. It applies `root-app`, which tells Argo CD to sync three layers from this repo:
+
+| App | Directory | Purpose |
+|-----|-----------|---------|
+| `platform-infra` | `gitops/infrastructure/` | Namespaces, base resources |
+| `platform-addons` | `gitops/addons/` | Platform components |
+| `platform-apps` | `gitops/apps/` | Workloads (empty for now) |
+
+`platform-addons` only picks up `**/application.yaml` files inside `gitops/addons/`, so `values.yaml` and other files in those folders are ignored by that sync.
 
 ```mermaid
-flowchart TB
-    subgraph wsl["WSL2"]
-        Repo["GitHub"]
-        subgraph k3d["k3d platform-lab (1 node)"]
-            ArgoCD["Argo CD"]
-            NGINX["ingress-nginx :8080"]
-            Prom["Prometheus"]
-            Graf["Grafana"]
-        end
-        Repo -->|sync| ArgoCD
-        ArgoCD --> NGINX
-        ArgoCD --> Prom
-        ArgoCD --> Graf
-    end
+flowchart LR
+    Git[GitHub repo] --> Argo[Argo CD]
+    Argo --> Infra[infrastructure]
+    Argo --> Addons[addons]
+    Argo --> Apps[apps]
 ```
 
-**Flow:** `bootstrap/create-cluster.sh` creates the cluster and installs Argo CD → applies `root-app` → Argo CD syncs infra, addons, and apps from Git.
-
-| Application | Path |
-|-------------|------|
-| `platform-infra` | `gitops/infrastructure/` |
-| `platform-addons` | `gitops/addons/` (`**/application.yaml` only) |
-| `platform-apps` | `gitops/apps/` |
-
----
-
-## Repository layout
+## Repo layout
 
 ```
 platform-lab/
-├── bootstrap/
-│   ├── create-cluster.sh
-│   ├── k3d-config.yaml
-│   └── argocd-values.yaml
+├── bootstrap/           # cluster creation + Argo CD install
 └── gitops/
-    ├── clusters/platform-lab/   # App of Apps
+    ├── clusters/platform-lab/   # App of Apps entrypoint
     ├── infrastructure/
-    ├── addons/                  # see addon conventions below
-    └── apps/                    # workloads (empty)
+    ├── addons/                  # one folder per addon
+    └── apps/
 ```
 
-### Addon conventions
+Each addon folder typically has an `application.yaml`. Helm-based addons also have a `values.yaml`. Ingress resources for Argo CD and Grafana live under `manifests/` in their respective folders.
 
-Not every addon needs `templates/`. This repo uses **three patterns**:
+## Getting started
 
-**1. External chart** (ingress-nginx, Prometheus, Grafana)
-
-The chart and its `templates/` live in the upstream Helm repository. Here you only store configuration:
-
-```
-gitops/addons/ingress-nginx/
-├── application.yaml    # Argo CD → remote chart + local values
-└── values.yaml         # overrides (resources, replicas…)
-```
-
-**2. Plain manifests** (Argo CD / Grafana Ingress)
-
-Simple YAML resources without templating — `manifests/` folder:
-
-```
-gitops/addons/argocd-ingress/
-├── application.yaml    # Argo CD → path: .../manifests
-└── manifests/
-    └── ingress.yaml
-```
-
-**3. Local chart** (optional, for more complex custom apps)
-
-When you need parameterization (`{{ .Values.host }}`, conditionals, etc.), use a Helm chart in Git:
-
-```
-gitops/addons/my-addon/
-├── application.yaml
-├── Chart.yaml
-├── values.yaml
-└── templates/
-    ├── deployment.yaml
-    └── ingress.yaml
-```
-
-For a static Ingress, `manifests/` is enough. Move to `Chart.yaml` + `templates/` when the addon grows or you need reusable values across environments.
-
----
-
-## Quick start
+**Push your changes to GitHub first.** After bootstrap, Argo CD pulls from the remote repo, not your local files.
 
 ```bash
 git clone https://github.com/Jaimegcaam/platform-lab.git
@@ -131,36 +66,35 @@ chmod +x bootstrap/create-cluster.sh
 ./bootstrap/create-cluster.sh
 ```
 
-The script prompts for the Grafana admin password and deploys everything else via GitOps.
+The script finds the repo root on its own, so an absolute path works too.
 
-> **Push to GitHub before bootstrapping.** Argo CD syncs from the remote repo, not your local folder.
-
-### Hosts file
-
-Add to `C:\Windows\System32\drivers\etc\hosts` (Windows) and `/etc/hosts` (WSL):
+Add these lines to your hosts file (`/etc/hosts` in WSL and `C:\Windows\System32\drivers\etc\hosts` on Windows):
 
 ```
 127.0.0.1 argocd.local grafana.local
 ```
 
-### Access
+Then open:
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Argo CD | http://argocd.local:8080 | `admin` + initial secret |
-| Grafana | http://grafana.local:8080 | `admin` + bootstrap password |
-| Argo CD (alt.) | https://localhost:8081 | port-forward |
+- Argo CD — http://argocd.local:8080
+- Grafana — http://grafana.local:8080
+
+Argo CD login is `admin`. Grab the initial password with:
 
 ```bash
-# Argo CD initial admin password
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d && echo
+```
 
-# Alternative port-forward
+Grafana login is also `admin`, using the password you typed during bootstrap.
+
+If ingress is not ready yet, port-forward Argo CD:
+
+```bash
 kubectl port-forward svc/argocd-server -n argocd 8081:443
 ```
 
-### Verify
+Check that things came up:
 
 ```bash
 kubectl get nodes
@@ -168,55 +102,34 @@ kubectl get applications -n argocd
 kubectl get pods -A
 ```
 
----
+## Why it is kept small
 
-## Resource profile
+- One k3d node instead of a multi-node setup
+- Prometheus retention capped at 1 day, 1 Gi disk
+- No Alertmanager, node-exporter, Dex, or Vault
+- Resource requests kept low in the Helm values
 
-Decisions to keep the homelab lightweight:
+If you have more RAM to spare, add agents in `bootstrap/k3d-config.yaml` and bump limits in the addon `values.yaml` files.
 
-| Decision | Reason |
-|----------|--------|
-| Single k3d node (0 agents) | Fewer containers = less RAM |
-| No Vault in bootstrap | Sensitive data via Kubernetes Secrets |
-| Prometheus: 1 Gi disk, 1d retention | Enough for local demos |
-| No node-exporter or Alertmanager | Optional components disabled |
-| Grafana without PVC | Avoids extra disk usage |
-| Argo CD without Dex / ApplicationSet | Fewer auxiliary pods |
-
-Need more headroom? Increase `agents` in `k3d-config.yaml` and `resources` in the `values.yaml` files.
-
----
-
-## Operations
+## Day-to-day commands
 
 ```bash
-k3d cluster list
 kubectl config use-context k3d-platform-lab
+k3d cluster list
 k3d cluster delete platform-lab
 ```
 
-### Add an addon
+To add another addon: create a folder under `gitops/addons/`, add an `application.yaml`, commit, and push. Argo CD picks it up on the next sync.
 
-1. Create `gitops/addons/<name>/` with `application.yaml` and, if needed, `values.yaml`.
-2. Commit + push → `platform-addons` discovers the new `application.yaml` automatically.
+Using a fork? Update `repoURL` in the manifests under `gitops/clusters/`.
 
-> External Helm charts use **multi-source** (remote chart + values from Git). Requires Argo CD 2.6+.
+## TODO
 
-### Fork
-
-Update `repoURL` in manifests under `gitops/clusters/`.
-
----
-
-## Roadmap
-
-- [ ] Demo app in `gitops/apps/` exposed via Ingress
+- [ ] Demo app in `gitops/apps/` behind ingress
 - [ ] ResourceQuota / LimitRange in `infrastructure/`
-- [ ] External Secrets Operator (secrets manager integration)
-- [ ] CI: kubeconform + helm lint
+- [ ] External Secrets Operator
+- [ ] CI (kubeconform, helm lint)
 
 ---
 
-## Author
-
-**Jaime** — [github.com/Jaimegcaam/platform-lab](https://github.com/Jaimegcaam/platform-lab)
+Built by [Jaime](https://github.com/Jaimegcaam/platform-lab).
