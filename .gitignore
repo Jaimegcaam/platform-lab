@@ -1,0 +1,31 @@
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Cursor (reglas locales)
+.cursor/
+
+# Secretos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.yaml
+*-secret.yaml
+kubeconfig
+kubeconfig.*
+
+# Generados
+*.generated.yaml
+rendered/
+charts/
+
+# Temporales
+*.log
+tmp/
+.cache/

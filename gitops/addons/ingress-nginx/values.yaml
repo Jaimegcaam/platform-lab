@@ -1,0 +1,25 @@
+controller:
+  replicaCount: 1
+
+  service:
+    type: LoadBalancer
+
+  publishService:
+    enabled: true
+
+  metrics:
+    enabled: false
+
+  admissionWebhooks:
+    enabled: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 90Mi
+    limits:
+      cpu: 200m
+      memory: 200Mi
+
+defaultBackend:
+  enabled: false
