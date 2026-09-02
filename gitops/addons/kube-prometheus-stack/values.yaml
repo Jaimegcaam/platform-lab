@@ -1,12 +1,8 @@
+# Cluster label required by K8s Views dashboards (label_values, cluster="$cluster" filters)
+cluster: platform-lab
+
 grafana:
   enabled: false
-  forceDeployDashboards: true
-  defaultDashboardsEnabled: true
-  defaultDashboardsTimezone: utc
-  sidecar:
-    dashboards:
-      label: grafana_dashboard
-      labelValue: "1"
 
 alertmanager:
   enabled: false
@@ -21,6 +17,8 @@ defaultRules:
 
 prometheus:
   prometheusSpec:
+    externalLabels:
+      cluster: platform-lab
     retention: 1d
     retentionSize: 512MB
     scrapeInterval: 60s
@@ -29,8 +27,6 @@ prometheus:
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
-    externalLabels:
-      cluster: platform-lab
     resources:
       requests:
         cpu: 100m
@@ -65,7 +61,6 @@ kubeStateMetrics:
       cpu: 100m
       memory: 128Mi
 
-# Required for node CPU/memory panels in the official dashboards
 nodeExporter:
   enabled: true
   resources:

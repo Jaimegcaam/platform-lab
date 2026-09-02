@@ -11,7 +11,7 @@ It is tuned for a laptop — single node, low memory limits — not a production
 - **ingress-nginx** — HTTP ingress on port `8080`
 - **Prometheus + Grafana** — basic observability stack
 
-Grafana loads **official kube-prometheus-stack dashboards** via sidecar (ConfigMaps created by that chart with `forceDeployDashboards: true`). Includes cluster CPU/memory, namespaces, pods, nodes, and Prometheus health.
+Grafana dashboards: **Kubernetes / Views** (Global, Namespaces, Pods, Nodes), **Prometheus overview**, and **Argo CD** — stored in Git and loaded via sidecar.
 
 ## Prerequisites
 
@@ -131,6 +131,7 @@ Common causes: Helm not installed, no network for `helm repo update`, or the clu
 - Prometheus retention capped at 1 day, 1 Gi disk, 768Mi RAM (256Mi OOMs on startup)
 - No Alertmanager, Dex, or Vault
 - node-exporter enabled (1 pod) — needed for CPU/memory dashboard panels
+- Prometheus `cluster: platform-lab` label — required by K8s Views dashboards for the cluster variable
 - Argo CD repo-server bumped to 768Mi — kube-prometheus-stack is too large to render with less
 - Resource requests kept low in the Helm values
 
@@ -150,14 +151,16 @@ Using a fork? Update `repoURL` in the manifests under `gitops/clusters/`.
 
 ### Grafana dashboards (existing cluster)
 
-Dashboards come from **kube-prometheus-stack** (`forceDeployDashboards: true`). After push, sync **`kube-prometheus-stack`** then **`grafana`**, and restart Grafana:
+After push, sync **`grafana-ingress`** (ConfigMaps) and **`grafana`** (sidecar), then restart:
 
 ```bash
 kubectl rollout restart deployment/grafana -n monitoring
 kubectl get configmap -n monitoring -l grafana_dashboard=1
 ```
 
-You should see ConfigMaps like `kube-prometheus-stack-k8s-resources-cluster`. Open the **Kubernetes** folder in Grafana.
+Folders: **Kubernetes** and **Platform**. Ensure Prometheus and node-exporter pods are Running first.
+
+If you re-import dashboards from Grafana.com, run `scripts/fix-grafana-dashboards.ps1` (datasource UID + KSM 2.x metric names).
 
 ## TODO
 

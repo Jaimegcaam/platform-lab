@@ -31,14 +31,14 @@ datasources:
         access: proxy
         isDefault: true
 
-# Load official kube-prometheus-stack dashboards (ConfigMaps from that chart)
+# Dashboards from ConfigMaps (gitops/addons/grafana/manifests via grafana-ingress app)
 sidecar:
   dashboards:
     enabled: true
     SCProvider: true
     label: grafana_dashboard
     labelValue: "1"
+    folderAnnotation: grafana_folder
     searchNamespace: monitoring
     provider:
       allowUiUpdates: true
-    defaultFolderName: Kubernetes
