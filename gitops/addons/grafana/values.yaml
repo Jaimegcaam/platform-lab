@@ -12,10 +12,10 @@ admin:
 resources:
   requests:
     cpu: 25m
-    memory: 64Mi
-  limits:
-    cpu: 150m
     memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
 
 datasources:
   datasources.yaml:
@@ -26,3 +26,61 @@ datasources:
         url: http://kube-prometheus-stack-prometheus.monitoring:9090
         access: proxy
         isDefault: true
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: kubernetes
+        orgId: 1
+        folder: Kubernetes
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/kubernetes
+      - name: platform
+        orgId: 1
+        folder: Platform
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/platform
+
+# Dashboards from grafana.com — tuned for kube-prometheus-stack + kube-state-metrics
+dashboards:
+  kubernetes:
+    k8s-views-global:
+      gnetId: 15757
+      revision: 28
+      datasource: Prometheus
+    k8s-views-namespaces:
+      gnetId: 15758
+      revision: 37
+      datasource: Prometheus
+    k8s-views-pods:
+      gnetId: 15760
+      revision: 34
+      datasource: Prometheus
+    k8s-compute-cluster:
+      gnetId: 13407
+      revision: 1
+      datasource: Prometheus
+    k8s-compute-namespace:
+      gnetId: 13408
+      revision: 1
+      datasource: Prometheus
+    k8s-compute-pod:
+      gnetId: 13409
+      revision: 1
+      datasource: Prometheus
+  platform:
+    prometheus-overview:
+      gnetId: 3662
+      revision: 2
+      datasource: Prometheus
+    argocd:
+      gnetId: 14584
+      revision: 1
+      datasource: Prometheus

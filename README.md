@@ -11,6 +11,8 @@ It is tuned for a laptop — single node, low memory limits — not a production
 - **ingress-nginx** — HTTP ingress on port `8080`
 - **Prometheus + Grafana** — basic observability stack
 
+Grafana ships with pre-provisioned dashboards (folders **Kubernetes** and **Platform**): cluster overview, namespaces, pods, CPU/memory usage, Prometheus health, and Argo CD metrics.
+
 ## Prerequisites
 
 WSL2 with Docker, `kubectl`, Helm, and k3d installed. Roughly 6–8 Gi RAM assigned to WSL is enough.
@@ -144,6 +146,16 @@ k3d cluster delete platform-lab
 To add another addon: create a folder under `gitops/addons/`, add an `application.yaml`, commit, and push. Argo CD picks it up on the next sync.
 
 Using a fork? Update `repoURL` in the manifests under `gitops/clusters/`.
+
+### Grafana dashboards (existing cluster)
+
+After pulling these changes, push to Git and sync. Argo CD metrics also need a one-time Helm upgrade:
+
+```bash
+helm upgrade argocd argo/argo-cd -n argocd --values bootstrap/argocd-values.yaml
+```
+
+Then sync `grafana`, `kube-prometheus-stack`, and `argocd-metrics` in Argo CD.
 
 ## TODO
 
