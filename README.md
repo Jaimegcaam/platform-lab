@@ -19,6 +19,18 @@ WSL2 with Docker, `kubectl`, Helm, and k3d installed. Roughly 6–8 Gi RAM assig
 docker info && kubectl version --client && helm version && k3d version
 ```
 
+If anything is missing on Ubuntu/WSL:
+
+```bash
+# Helm
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# k3d
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+```
+
+Docker Desktop with WSL integration, or Docker Engine inside WSL. `kubectl` usually comes with Docker Desktop; otherwise install it from the [Kubernetes docs](https://kubernetes.io/docs/tasks/tools/).
+
 ## How it works
 
 1. `bootstrap/create-cluster.sh` creates the k3d cluster and installs Argo CD.
@@ -101,6 +113,15 @@ kubectl get nodes
 kubectl get applications -n argocd
 kubectl get pods -A
 ```
+
+If bootstrap stops after `Installing Argo CD...`, the old script hid Helm errors. Pull the latest script and retry:
+
+```bash
+k3d cluster delete platform-lab
+./bootstrap/create-cluster.sh
+```
+
+Common causes: Helm not installed, no network for `helm repo update`, or the cluster already exists from a previous partial run.
 
 ## Why it is kept small
 
