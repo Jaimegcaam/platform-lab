@@ -14,18 +14,20 @@ defaultRules:
 prometheus:
   prometheusSpec:
     retention: 1d
+    retentionSize: 512MB
     scrapeInterval: 60s
     evaluationInterval: 60s
+    walCompression: true
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
     resources:
       requests:
-        cpu: 50m
-        memory: 128Mi
-      limits:
-        cpu: 300m
+        cpu: 100m
         memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
     storageSpec:
       volumeClaimTemplate:
         spec:

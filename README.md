@@ -128,7 +128,7 @@ Common causes: Helm not installed, no network for `helm repo update`, or the clu
 ## Why it is kept small
 
 - One k3d node instead of a multi-node setup
-- Prometheus retention capped at 1 day, 1 Gi disk
+- Prometheus retention capped at 1 day, 1 Gi disk, 768Mi RAM (256Mi OOMs on startup)
 - No Alertmanager, node-exporter, Dex, or Vault
 - Argo CD repo-server bumped to 768Mi — kube-prometheus-stack is too large to render with less
 - Resource requests kept low in the Helm values
