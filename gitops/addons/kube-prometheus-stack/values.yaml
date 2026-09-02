@@ -1,10 +1,18 @@
 grafana:
   enabled: false
+  forceDeployDashboards: true
+  defaultDashboardsEnabled: true
+  defaultDashboardsTimezone: utc
+  sidecar:
+    dashboards:
+      label: grafana_dashboard
+      labelValue: "1"
 
 alertmanager:
   enabled: false
 
 defaultRules:
+  create: true
   rules:
     alertmanager: false
     etcd: false
@@ -21,6 +29,8 @@ prometheus:
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
+    externalLabels:
+      cluster: platform-lab
     resources:
       requests:
         cpu: 100m
@@ -55,5 +65,13 @@ kubeStateMetrics:
       cpu: 100m
       memory: 128Mi
 
+# Required for node CPU/memory panels in the official dashboards
 nodeExporter:
-  enabled: false
+  enabled: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi

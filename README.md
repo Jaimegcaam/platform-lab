@@ -11,7 +11,7 @@ It is tuned for a laptop — single node, low memory limits — not a production
 - **ingress-nginx** — HTTP ingress on port `8080`
 - **Prometheus + Grafana** — basic observability stack
 
-Grafana dashboards live in `gitops/addons/grafana/dashboards/` as JSON and are loaded via the Grafana sidecar from ConfigMaps (folder **Kubernetes** and **Platform**).
+Grafana loads **official kube-prometheus-stack dashboards** via sidecar (ConfigMaps created by that chart with `forceDeployDashboards: true`). Includes cluster CPU/memory, namespaces, pods, nodes, and Prometheus health.
 
 ## Prerequisites
 
@@ -129,7 +129,8 @@ Common causes: Helm not installed, no network for `helm repo update`, or the clu
 
 - One k3d node instead of a multi-node setup
 - Prometheus retention capped at 1 day, 1 Gi disk, 768Mi RAM (256Mi OOMs on startup)
-- No Alertmanager, node-exporter, Dex, or Vault
+- No Alertmanager, Dex, or Vault
+- node-exporter enabled (1 pod) — needed for CPU/memory dashboard panels
 - Argo CD repo-server bumped to 768Mi — kube-prometheus-stack is too large to render with less
 - Resource requests kept low in the Helm values
 
@@ -149,14 +150,14 @@ Using a fork? Update `repoURL` in the manifests under `gitops/clusters/`.
 
 ### Grafana dashboards (existing cluster)
 
-Dashboard JSON lives in `gitops/addons/grafana/dashboards/`. After push, sync the **`grafana`** app (not only grafana-ingress). Then restart Grafana:
+Dashboards come from **kube-prometheus-stack** (`forceDeployDashboards: true`). After push, sync **`kube-prometheus-stack`** then **`grafana`**, and restart Grafana:
 
 ```bash
 kubectl rollout restart deployment/grafana -n monitoring
-kubectl get configmap -n monitoring | grep grafana-dashboard
+kubectl get configmap -n monitoring -l grafana_dashboard=1
 ```
 
-You should see several `grafana-dashboard-*` ConfigMaps. If not, open the `grafana` app in Argo CD and check the sync error.
+You should see ConfigMaps like `kube-prometheus-stack-k8s-resources-cluster`. Open the **Kubernetes** folder in Grafana.
 
 ## TODO
 
