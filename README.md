@@ -11,7 +11,7 @@ It is tuned for a laptop — single node, low memory limits — not a production
 - **ingress-nginx** — HTTP ingress on port `8080`
 - **Prometheus + Grafana** — basic observability stack
 
-Grafana ships with pre-provisioned dashboards (folders **Kubernetes** and **Platform**): cluster overview, namespaces, pods, CPU/memory usage, Prometheus health, and Argo CD metrics.
+Grafana dashboards live in `gitops/addons/grafana/dashboards/` as JSON and are loaded via the Grafana sidecar from ConfigMaps (folder **Kubernetes** and **Platform**).
 
 ## Prerequisites
 
